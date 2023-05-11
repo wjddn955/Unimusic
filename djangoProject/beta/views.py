@@ -11,6 +11,9 @@ class main(APIView):
     def get(self, request):
         return render(request, 'beta/MAIN.html')
 
+class result(APIView):
+    def get(self, request):
+        return render(request, 'beta/ResultPage.html')
 
 class inputPage(APIView):
     def get(self, request):
