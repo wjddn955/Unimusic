@@ -1,105 +1,52 @@
-const record = document.getElementById("record")
-        const stop = document.getElementById("stop")
-        const soundClips = document.getElementById("sound-clips")
-        const chkHearMic = document.getElementById("chk-hear-mic")
+$(document).ready(function () {
+    const $audioEl = document.querySelector("audio");
+    const $btn1 = document.querySelector("#recording-btn");
+    let isRecording = false;
+    let mediaRecorder = null;
+    const audioArray = [];
 
-        const audioCtx = new(window.AudioContext || window.webkitAudioContext)() // 오디오 컨텍스트 정의
+    $btn1.onclick = async function (event) {
+        if (!isRecording) {
 
-        const analyser = audioCtx.createAnalyser()
-        //        const distortion = audioCtx.createWaveShaper()
-        //        const gainNode = audioCtx.createGain()
-        //        const biquadFilter = audioCtx.createBiquadFilter()
-
-        function makeSound(stream) {
-            const source = audioCtx.createMediaStreamSource(stream)
-
-            source.connect(analyser)
-            //            analyser.connect(distortion)
-            //            distortion.connect(biquadFilter)
-            //            biquadFilter.connect(gainNode)
-            //            gainNode.connect(audioCtx.destination) // connecting the different audio graph nodes together
-            analyser.connect(audioCtx.destination)
-
-        }
-
-        if (navigator.mediaDevices) {
-            console.log('getUserMedia supported.')
-
-            const constraints = {
-                audio: true
+            const mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
+            mediaRecorder = new MediaRecorder(mediaStream);
+            mediaRecorder.ondataavailable = (event) => {
+                audioArray.push(event.data);
             }
-            let chunks = []
+            mediaRecorder.onstop = (event) => {
 
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-
-                    const mediaRecorder = new MediaRecorder(stream)
-
-                    chkHearMic.onchange = e => {
-                        if(e.target.checked == true) {
-                            audioCtx.resume()
-                            makeSound(stream)
-                        } else {
-                            audioCtx.suspend()
-                        }
-                    }
-
-                    record.onclick = () => {
-                        mediaRecorder.start()
-                        console.log(mediaRecorder.state)
-                        console.log("recorder started")
-                        record.style.background = "red"
-                        record.style.color = "black"
-                    }
-
-                    stop.onclick = () => {
-                        mediaRecorder.stop()
-                        console.log(mediaRecorder.state)
-                        console.log("recorder stopped")
-                        record.style.background = ""
-                        record.style.color = ""
-                    }
-
-                    mediaRecorder.onstop = e => {
-                        console.log("data available after MediaRecorder.stop() called.")
-
-                        const clipName = prompt("오디오 파일 제목을 입력하세요.", new Date())
-
-                        const clipContainer = document.createElement('article')
-                        const clipLabel = document.createElement('p')
-                        const audio = document.createElement('audio')
-                        const deleteButton = document.createElement('button')
-
-                        clipContainer.classList.add('clip')
-                        audio.setAttribute('controls', '')
-                        deleteButton.innerHTML = "삭제"
-                        clipLabel.innerHTML = clipName
-
-                        clipContainer.appendChild(audio)
-                        clipContainer.appendChild(clipLabel)
-                        clipContainer.appendChild(deleteButton)
-                        soundClips.appendChild(clipContainer)
-
-                        audio.controls = true
-                        const blob = new Blob(chunks, {
-                            'type': 'audio/ogg codecs=opus'
-                        })
-                        chunks = []
-                        const audioURL = URL.createObjectURL(blob)
-                        audio.src = audioURL
-                        console.log("recorder stopped")
-
-                        deleteButton.onclick = e => {
-                            evtTgt = e.target
-                            evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode)
-                        }
-                    }
-
-                    mediaRecorder.ondataavailable = e => {
-                        chunks.push(e.data)
-                    }
+                const blob = new Blob(audioArray, {"type": "audio/ogg codecs=opus"});
+                audioArray.splice(0); // 기존 오디오 데이터들은 모두 비워 초기화한다.
+                const blobURL = window.URL.createObjectURL(blob);
+                $audioEl.src = blobURL;
+                $audioEl.play();
+                $('#submit-btn').click(function (){
+                    sendBlobToBackend(blob);
                 })
-                .catch(err => {
-                    console.log('The following error occurred: ' + err)
-                })
+            }
+            mediaRecorder.start();
+            isRecording = true;
+
+        } else {
+            mediaRecorder.stop();
+            isRecording = false;
         }
+    }
+})
+
+function sendBlobToBackend(blob) {
+    const formData = new FormData();
+    formData.append('audio_file', blob, 'recording.mp3');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/input/'); // 백엔드의 API 엔드포인트 URL로 수정해야 합니다.
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    xhr.onload = function () {
+        if (xhr.status === 201) {
+            console.log('음성 파일이 성공적으로 전송되었습니다.');
+        } else {
+            console.error('음성 파일 전송에 실패했습니다. 상태 코드: ', xhr.status);
+        }
+    };
+    xhr.send(formData);
+}

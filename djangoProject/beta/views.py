@@ -7,6 +7,7 @@ from rest_framework import status
 from .serializers import VoiceSerrializers
 
 
+
 # Create your views here.
 class main(APIView):
     def get(self, request):
@@ -22,9 +23,11 @@ class inputPage(APIView):
     def get(self, request):
         return render(request, 'beta/inputPage.html')
 
+
     # audio input post
     def post(self, request):
         serializer = VoiceSerrializers(data=request.data)
+        print(serializer)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -36,3 +39,4 @@ class inputPage(APIView):
             output = '윤하'
             context = dict(output=output)
             return render(request, template_name='beta/ResultPage.html', context=context)
+
