@@ -11,6 +11,9 @@
     <button id="recording-btn">시작/종료</button>
     <br><br>
     <audio controls>녹음된 소리를 재생할 audio 엘리먼트</audio>
-    <button id="submit-btn">제출하기</button>
+    <form method="post">
+        {% csrf_token %}
+        <button id="submit-btn">제출하기</button>
+    </form>
 </body>
 </html>

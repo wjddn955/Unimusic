@@ -30,21 +30,23 @@ class inputPage(APIView):
 
     # audio input post
     def post(self, request):
+        '''
         serializer = VoiceSerrializers(data=request.data)
         print(serializer)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             voice = serializer['file']
-            '''
+
             딥러닝 input output 
             
-            '''
+
             output = 0
             singer_list = ['윤하', '이수현', '아이유', '자우림', '태연', '헤이즈', '윤미래', '백예린', '비비', '슬기', '나연', '거미', '10cm', '엠씨더맥스', '성시경', '장범준', '신용재', '케이윌', '민경훈', '박효신', '나얼', '정승환']
             singer_name = singer_list[output]
-            singer_rec = Singer.object.filter(name=singer_name)
+        '''
+        singer_rec = Singer.objects.get(name='이수현')
 
-            context = {'singer': singer_rec}
-            return render(request, template_name='beta/ResultPage.html', context=context)
+        context = {'singer': singer_rec}
+        return render(request, template_name='beta/ResultPage.html', context=context)
 
