@@ -12,9 +12,5 @@ class Singer(models.Model):
 
 
 class Audio(models.Model):
+    names = models.CharField(max_length=500, null=True,default=False)
     file = models.FileField(upload_to='audio')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.file.name
-
